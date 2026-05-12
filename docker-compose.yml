@@ -1,0 +1,23 @@
+name: peelie-node-server
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: peelie-node-server
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: peelie
+      POSTGRES_PASSWORD: peelie_dev
+      POSTGRES_DB: peelie_node_server
+    ports:
+      - "5436:5432"
+    volumes:
+      - peelie-node-server-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U peelie -d peelie_node_server"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  peelie-node-server-data:

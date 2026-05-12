@@ -1,0 +1,177 @@
+// Peelie 백엔드 스키마 첫 컷
+// 결정 사항:
+//  - PK: cuid 단일 (publicId 분리 X)
+//  - PersonalityType: enum 6개 고정 (코드값은 사용자가 정의해서 교체)
+//  - 친구 관계: 단방향 (FriendCode 입력 → 즉시 추가)
+//  - Schedule 등록 즉시 ChatRoom 생성
+//  - RefreshToken / Embedding / PushToken / Notification 은 챗봇·Auth·FCM 붙일 때 추가
+
+generator client {
+  provider        = "prisma-client-js"
+  output          = "../node_modules/.prisma/client"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [vector]
+}
+
+// ============================================================
+// Enums
+// ============================================================
+
+// TODO(user): 실제 6개 타입 코드값 정해서 교체
+//   예시: ANALYZER, EXPLORER, HARMONIZER, ACHIEVER, GUARDIAN, DREAMER
+//   교체 시 prisma migrate dev 한 번 더 돌리면 됨
+enum PersonalityType {
+  PERSONA_A
+  PERSONA_B
+  PERSONA_C
+  PERSONA_D
+  PERSONA_E
+  PERSONA_F
+}
+
+enum AuthProvider {
+  KAKAO
+  APPLE
+}
+
+// 같은 provider라도 웹/앱 로그인 경로 분리
+enum AuthProviderType {
+  WEB
+  APP
+}
+
+enum MessageRole {
+  USER
+  AVATAR
+}
+
+// ============================================================
+// User / Account
+// ============================================================
+
+model User {
+  id          String          @id @default(cuid())
+  email       String?         @unique
+  name        String
+  personality PersonalityType
+  friendCode  String          @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  accounts            Account[]
+  avatar              Avatar?
+  friendshipsAsOwner  Friendship[] @relation("FriendshipOwner")
+  friendshipsAsFriend Friendship[] @relation("FriendshipFriend")
+  schedulesAsOwner    Schedule[]   @relation("ScheduleOwner")
+  schedulesAsFriend   Schedule[]   @relation("ScheduleFriend")
+}
+
+model Account {
+  id             String           @id @default(cuid())
+  userId         String
+  provider       AuthProvider
+  providerType   AuthProviderType
+  providerUserId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerUserId])
+  @@index([userId])
+}
+
+// ============================================================
+// Avatar (LLM 페르소나 거점)
+// 첫 컷은 비어있음. 챗봇 단계에서 systemPrompt/memory 등 컬럼 추가
+// ============================================================
+
+model Avatar {
+  id     String @id @default(cuid())
+  userId String @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ============================================================
+// Friendship (단방향)
+// owner 가 friend 의 FriendCode 를 입력 → row 1개 생성
+// ============================================================
+
+model Friendship {
+  id           String @id @default(cuid())
+  ownerId      String
+  friendUserId String
+
+  createdAt DateTime @default(now())
+
+  owner      User @relation("FriendshipOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  friendUser User @relation("FriendshipFriend", fields: [friendUserId], references: [id], onDelete: Cascade)
+
+  @@unique([ownerId, friendUserId])
+  @@index([friendUserId])
+}
+
+// ============================================================
+// Schedule + ChatRoom (1:1)
+// 일정 등록 트랜잭션에서 ChatRoom 같이 INSERT
+// ============================================================
+
+model Schedule {
+  id           String   @id @default(cuid())
+  ownerId      String
+  friendUserId String
+  meetDate     DateTime @db.Date
+  description  String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  owner      User      @relation("ScheduleOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  friendUser User      @relation("ScheduleFriend", fields: [friendUserId], references: [id], onDelete: Cascade)
+  chatRoom   ChatRoom?
+
+  @@index([ownerId, meetDate])
+  @@index([friendUserId])
+}
+
+model ChatRoom {
+  id         String @id @default(cuid())
+  scheduleId String @unique
+
+  createdAt DateTime @default(now())
+
+  schedule Schedule  @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  messages Message[]
+}
+
+// ============================================================
+// Message (turn 단위)
+//  - 1 LLM 응답 = 1 row
+//  - bubbles: [{ text, delayMs }]  ← 멀티 버블
+//  - suggestions: assistant 응답일 때 3개 (USER 메시지는 빈 배열)
+// ============================================================
+
+model Message {
+  id          String      @id @default(cuid())
+  chatRoomId  String
+  role        MessageRole
+  bubbles     Json
+  suggestions String[]    @default([])
+
+  createdAt DateTime @default(now())
+
+  chatRoom ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
+
+  @@index([chatRoomId, createdAt])
+}

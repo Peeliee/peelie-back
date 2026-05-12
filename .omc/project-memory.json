@@ -1,0 +1,193 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1778595627809,
+  "projectRoot": "/Users/kimyonghee/Documents/kyh/peelie-server",
+  "techStack": {
+    "languages": [
+      {
+        "name": "JavaScript/TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "package.json"
+        ]
+      },
+      {
+        "name": "TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "tsconfig.json"
+        ]
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "@nestjs/core",
+        "version": "11.0.1",
+        "category": "backend"
+      },
+      {
+        "name": "jest",
+        "version": "30.0.0",
+        "category": "testing"
+      }
+    ],
+    "packageManager": "pnpm",
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": "pnpm build",
+    "testCommand": "pnpm test",
+    "lintCommand": "pnpm lint",
+    "devCommand": "pnpm start",
+    "scripts": {
+      "build": "nest build",
+      "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+      "start": "nest start",
+      "start:dev": "nest start --watch",
+      "start:debug": "nest start --debug --watch",
+      "start:prod": "node dist/main",
+      "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+      "test": "jest",
+      "test:watch": "jest --watch",
+      "test:cov": "jest --coverage",
+      "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
+      "test:e2e": "jest --config ./test/jest-e2e.json"
+    }
+  },
+  "conventions": {
+    "namingStyle": "camelCase/PascalCase",
+    "importStyle": "ES modules",
+    "testPattern": null,
+    "fileOrganization": null
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [
+      "src",
+      "test"
+    ],
+    "gitBranches": null
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "src": {
+      "path": "src",
+      "purpose": "Source code",
+      "fileCount": 5,
+      "lastAccessed": 1778595627800,
+      "keyFiles": [
+        "app.controller.spec.ts",
+        "app.controller.ts",
+        "app.module.ts",
+        "app.service.ts",
+        "main.ts"
+      ]
+    },
+    "test": {
+      "path": "test",
+      "purpose": "Test files",
+      "fileCount": 2,
+      "lastAccessed": 1778595627801,
+      "keyFiles": [
+        "app.e2e-spec.ts",
+        "jest-e2e.json"
+      ]
+    }
+  },
+  "hotPaths": [
+    {
+      "path": "docker-compose.yml",
+      "accessCount": 5,
+      "lastAccessed": 1778605297851,
+      "type": "file"
+    },
+    {
+      "path": ".env",
+      "accessCount": 3,
+      "lastAccessed": 1778605148960,
+      "type": "file"
+    },
+    {
+      "path": ".env.example",
+      "accessCount": 3,
+      "lastAccessed": 1778605149630,
+      "type": "file"
+    },
+    {
+      "path": "src/app.module.ts",
+      "accessCount": 3,
+      "lastAccessed": 1778605510581,
+      "type": "file"
+    },
+    {
+      "path": "prisma/schema.prisma",
+      "accessCount": 2,
+      "lastAccessed": 1778605542313,
+      "type": "file"
+    },
+    {
+      "path": "src/main.ts",
+      "accessCount": 2,
+      "lastAccessed": 1778605543112,
+      "type": "file"
+    },
+    {
+      "path": "tsconfig.json",
+      "accessCount": 2,
+      "lastAccessed": 1778605738025,
+      "type": "file"
+    },
+    {
+      "path": ".claude/skills/grill-me/SKILL.md",
+      "accessCount": 1,
+      "lastAccessed": 1778596150984,
+      "type": "file"
+    },
+    {
+      "path": "src/prisma/prisma.service.ts",
+      "accessCount": 1,
+      "lastAccessed": 1778604475394,
+      "type": "file"
+    },
+    {
+      "path": "src/prisma/prisma.module.ts",
+      "accessCount": 1,
+      "lastAccessed": 1778604478333,
+      "type": "file"
+    },
+    {
+      "path": "src/auth/auth-user.ts",
+      "accessCount": 1,
+      "lastAccessed": 1778605501390,
+      "type": "file"
+    },
+    {
+      "path": "src/auth/current-user.decorator.ts",
+      "accessCount": 1,
+      "lastAccessed": 1778605501679,
+      "type": "file"
+    },
+    {
+      "path": "src/auth/mock-auth.guard.ts",
+      "accessCount": 1,
+      "lastAccessed": 1778605505763,
+      "type": "file"
+    },
+    {
+      "path": "src/auth/auth.module.ts",
+      "accessCount": 1,
+      "lastAccessed": 1778605507241,
+      "type": "file"
+    },
+    {
+      "path": "src/auth/index.ts",
+      "accessCount": 1,
+      "lastAccessed": 1778605508443,
+      "type": "file"
+    }
+  ],
+  "userDirectives": []
+}
