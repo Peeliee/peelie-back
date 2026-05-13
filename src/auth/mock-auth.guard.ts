@@ -5,11 +5,13 @@ import {
   Injectable,
   OnModuleInit,
 } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 import { PersonalityType } from '@prisma/client';
 import type { Request } from 'express';
 
 import { PrismaService } from '../prisma/prisma.service';
 import type { AuthUser } from './auth-user';
+import { IS_PUBLIC_KEY } from './public.decorator';
 
 interface MockUserSeed {
   email: string;
@@ -41,7 +43,10 @@ const MOCK_USERS: MockUserSeed[] = [
 export class MockAuthGuard implements CanActivate, OnModuleInit {
   private mockUser: AuthUser | null = null;
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly reflector: Reflector,
+  ) {}
 
   async onModuleInit(): Promise<void> {
     for (const seed of MOCK_USERS) {
@@ -72,6 +77,12 @@ export class MockAuthGuard implements CanActivate, OnModuleInit {
   }
 
   canActivate(context: ExecutionContext): boolean {
+    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+    if (isPublic) return true;
+
     if (!this.mockUser) {
       throw new ForbiddenException('Mock user is not initialized yet.');
     }

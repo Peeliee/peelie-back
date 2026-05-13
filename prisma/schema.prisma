@@ -36,12 +36,6 @@ enum AuthProvider {
   APPLE
 }
 
-// 같은 provider라도 웹/앱 로그인 경로 분리
-enum AuthProviderType {
-  WEB
-  APP
-}
-
 enum MessageRole {
   USER
   AVATAR
@@ -63,6 +57,7 @@ model User {
 
   accounts            Account[]
   avatar              Avatar?
+  refreshTokens       RefreshToken[]
   friendshipsAsOwner  Friendship[] @relation("FriendshipOwner")
   friendshipsAsFriend Friendship[] @relation("FriendshipFriend")
   schedulesAsOwner    Schedule[]   @relation("ScheduleOwner")
@@ -70,10 +65,9 @@ model User {
 }
 
 model Account {
-  id             String           @id @default(cuid())
+  id             String       @id @default(cuid())
   userId         String
   provider       AuthProvider
-  providerType   AuthProviderType
   providerUserId String
 
   createdAt DateTime @default(now())
@@ -82,6 +76,22 @@ model Account {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerUserId])
+  @@index([userId])
+}
+
+// access token 은 stateless JWT. refresh token 만 DB 저장 (hash 형태, raw X)
+// 14일 TTL, revocable, rotation 으로 재발급
+model RefreshToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId])
 }
 
