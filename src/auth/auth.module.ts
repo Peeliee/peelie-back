@@ -4,6 +4,7 @@ import { JwtModule } from '@nestjs/jwt';
 
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { KakaoOAuthClient } from './kakao-oauth.client';
 import { MockAuthGuard } from './mock-auth.guard';
 import { SignupTokenGuard } from './signup-token.guard';
 
@@ -13,6 +14,7 @@ import { SignupTokenGuard } from './signup-token.guard';
   controllers: [AuthController],
   providers: [
     AuthService,
+    KakaoOAuthClient,
     MockAuthGuard,
     SignupTokenGuard,
     {

@@ -9,6 +9,11 @@ import { z } from 'zod';
 import { LlmService, type ChatHistoryMessage } from '../llm/llm.service';
 import { PrismaService } from '../prisma/prisma.service';
 import type { ChatStreamEvent, MessageBubble } from './dto/chat-stream.event';
+import type { ChatRoomListItem } from './dto/chatroom-list-item.response';
+import type {
+  ChatRoomListSort,
+  ListChatRoomsDto,
+} from './dto/list-chatrooms.dto';
 import type { ListMessagesDto } from './dto/list-messages.dto';
 import type { MessageListResponse } from './dto/message-list.response';
 import type { MessageResponse } from './dto/message.response';
@@ -30,6 +35,59 @@ export class ChatService {
     private readonly prisma: PrismaService,
     private readonly llmService: LlmService,
   ) {}
+
+  /**
+   * 홈 화면 "대화 중인 목록".
+   * 활성 약속(KST 오늘 이후) 의 chatRoom 만 반환.
+   * lastMessageAt = 마지막 메시지 createdAt, 없으면 chatRoom.createdAt.
+   */
+  async findActiveChatRooms(
+    userId: string,
+    opts: ListChatRoomsDto,
+  ): Promise<ChatRoomListItem[]> {
+    const sort: ChatRoomListSort = opts.sort ?? 'recent';
+    const today = kstTodayAsUtc();
+
+    const rows = await this.prisma.chatRoom.findMany({
+      where: {
+        schedule: {
+          ownerId: userId,
+          meetDate: { gte: today },
+        },
+      },
+      select: {
+        id: true,
+        createdAt: true,
+        schedule: {
+          select: {
+            meetDate: true,
+            friendUser: {
+              select: { id: true, name: true, personality: true },
+            },
+          },
+        },
+        messages: {
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+          select: { createdAt: true },
+        },
+      },
+    });
+
+    const items: ChatRoomListItem[] = rows.map((row) => ({
+      chatRoomId: row.id,
+      friend: row.schedule.friendUser,
+      meetDate: row.schedule.meetDate,
+      lastMessageAt: row.messages[0]?.createdAt ?? row.createdAt,
+    }));
+
+    items.sort((a, b) => {
+      const diff = a.lastMessageAt.getTime() - b.lastMessageAt.getTime();
+      return sort === 'recent' ? -diff : diff;
+    });
+
+    return items;
+  }
 
   async findMessages(
     userId: string,
@@ -267,6 +325,22 @@ export class ChatService {
 function parseBubbles(bubblesJson: Prisma.JsonValue): MessageBubble[] {
   const parsed = StoredBubblesSchema.safeParse(bubblesJson);
   return parsed.success ? parsed.data : [];
+}
+
+/**
+ * KST 기준 "오늘 자정" 의 UTC 표현 Date.
+ * 한국 사용자 입장의 "오늘 (이후)" 약속을 정확히 골라내기 위한 기준점.
+ */
+function kstTodayAsUtc(): Date {
+  // Intl 로 KST 오늘 YYYY-MM-DD 추출
+  const kstDateString = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date());
+  // meetDate 는 Prisma 가 @db.Date 컬럼을 UTC 자정으로 반환하므로 비교도 UTC 자정으로
+  return new Date(`${kstDateString}T00:00:00.000Z`);
 }
 
 function daysUntil(date: Date): number {

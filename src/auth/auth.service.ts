@@ -4,7 +4,7 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { AuthProvider, PersonalityType, Prisma } from '@prisma/client';
+import { AuthProvider, type PersonalityType, Prisma } from '@prisma/client';
 import { createHash, randomUUID } from 'crypto';
 
 import { PrismaService } from '../prisma/prisma.service';
@@ -14,6 +14,7 @@ import type {
   IssueSignupTokenResponse,
 } from './dto/auth.response';
 import { generateFriendCode } from './friend-code.util';
+import { KakaoOAuthClient } from './kakao-oauth.client';
 import type { SignupContext } from './signup-context';
 
 const ACCESS_TTL = '15m';
@@ -28,7 +29,18 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
+    private readonly kakaoClient: KakaoOAuthClient,
   ) {}
+
+  /**
+   * 카카오 웹 로그인: authorization code 로 카카오 토큰 교환 + 사용자 ID 조회 후
+   * 기존 계정이면 access/refresh, 신규면 signupToken 발급.
+   */
+  async signInWithKakaoWeb(code: string): Promise<IssueSignupTokenResponse> {
+    const token = await this.kakaoClient.exchangeCode(code);
+    const kakaoUser = await this.kakaoClient.fetchUser(token.access_token);
+    return this.issueByProvider(AuthProvider.KAKAO, String(kakaoUser.id));
+  }
 
   /**
    * 소셜 provider 식별자로 기존 계정 조회.

@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import type { Response } from 'express';
 
-import type { ApiErrorResponse } from '../dto/api-response';
+import type { ApiErrorResponse } from '../dto/api-response.dto';
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {

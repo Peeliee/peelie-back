@@ -8,7 +8,7 @@ import {
 import type { Response } from 'express';
 import { map, Observable } from 'rxjs';
 
-import type { ApiSuccessResponse } from '../dto/api-response';
+import type { ApiSuccessResponse } from '../dto/api-response.dto';
 
 /**
  * 모든 성공 응답을 ApiSuccessResponse 로 wrap.

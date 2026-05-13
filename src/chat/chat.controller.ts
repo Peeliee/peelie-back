@@ -1,13 +1,29 @@
-import { Body, Controller, Get, Param, Post, Query, Res } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  Res,
+} from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiProduces,
+  ApiTags,
+} from '@nestjs/swagger';
 import type { Response } from 'express';
 
 import type { AuthUser } from '../auth/auth-user';
 import { CurrentUser } from '../auth/current-user.decorator';
+import { ApiOkResponseWrapped } from '../common/decorators/api-ok-response-wrapped.decorator';
 import { ChatService } from './chat.service';
 import type { ChatStreamEvent } from './dto/chat-stream.event';
+import { ChatRoomListItem } from './dto/chatroom-list-item.response';
+import { ListChatRoomsDto } from './dto/list-chatrooms.dto';
 import { ListMessagesDto } from './dto/list-messages.dto';
-import type { MessageListResponse } from './dto/message-list.response';
+import { MessageListResponse } from './dto/message-list.response';
 import { SendMessageDto } from './dto/send-message.dto';
 
 @ApiTags('Chat')
@@ -16,7 +32,30 @@ import { SendMessageDto } from './dto/send-message.dto';
 export class ChatController {
   constructor(private readonly chatService: ChatService) {}
 
+  @Get()
+  @ApiOperation({
+    summary: '내 채팅방 목록 (홈 화면 "대화 중인 목록")',
+    description:
+      'KST 오늘 이후 약속의 chatRoom 만. ' +
+      'lastMessageAt = 마지막 메시지 시각 (USER+AVATAR 둘 다), 메시지 없으면 chatRoom.createdAt. ' +
+      'sort=recent (default): 최신순. sort=stale: 오래된 순.',
+  })
+  @ApiOkResponseWrapped(ChatRoomListItem, { isArray: true })
+  listChatRooms(
+    @CurrentUser() user: AuthUser,
+    @Query() query: ListChatRoomsDto,
+  ): Promise<ChatRoomListItem[]> {
+    return this.chatService.findActiveChatRooms(user.id, query);
+  }
+
   @Get(':chatRoomId/messages')
+  @ApiOperation({
+    summary: '채팅방 메시지 목록 (cursor 페이징)',
+    description:
+      '?before=ISO 로 그 시점 이전 메시지를 limit 개수만큼. default 30, max 100. ' +
+      'items 는 asc 순서. nextCursor=null 이면 더 이상 없음.',
+  })
+  @ApiOkResponseWrapped(MessageListResponse)
   list(
     @CurrentUser() user: AuthUser,
     @Param('chatRoomId') chatRoomId: string,
@@ -26,12 +65,19 @@ export class ChatController {
   }
 
   /**
-   * 사용자 메시지를 보내고 챗봇 멀티 버블 + 선지를 SSE 로 받는다.
+   * 사용자 메시지를 보내고 챗봇 멀티 버블 + 선지를 SSE 로 받음.
    * 이벤트 순서: meta → bubble × 1~4 → suggestions → done (실패 시 error).
    * 응답 wrap 미적용 (text/event-stream raw).
    */
-  @ApiOperation({ summary: '챗봇 메시지 보내기 (SSE)' })
   @Post(':chatRoomId/messages/stream')
+  @ApiOperation({
+    summary: '챗봇 메시지 보내기 (SSE)',
+    description:
+      'SSE 응답. event: meta → bubble × 1~4 → suggestions → done (or error). ' +
+      'bubble.delayMs 만큼 기다린 후 다음 bubble 도달. 첫 bubble 은 항상 1500ms. ' +
+      '응답 wrap 미적용 (text/event-stream).',
+  })
+  @ApiProduces('text/event-stream')
   async streamMessage(
     @CurrentUser() user: AuthUser,
     @Param('chatRoomId') chatRoomId: string,
@@ -59,10 +105,16 @@ export class ChatController {
   /**
    * 채팅방 입장 시 호출. 그날(KST) 첫 입장이면 봇이 먼저 인사, 아니면 즉시 skip.
    * 클라는 매번 호출하면 됨. 날짜 계산은 서버가 lastEnteredAt 기준 KST 비교.
-   * 응답 wrap 미적용 (text/event-stream raw).
    */
-  @ApiOperation({ summary: '선제 인사 (SSE)' })
   @Post(':chatRoomId/greeting/stream')
+  @ApiOperation({
+    summary: '선제 인사 (SSE)',
+    description:
+      '채팅방 진입 시 호출. lastEnteredAt 의 KST 날짜 ≠ 오늘 KST 날짜면 인사, ' +
+      '같으면 event: skip 즉시 종료. 두 경우 모두 lastEnteredAt=now() 업데이트. ' +
+      '응답 wrap 미적용 (text/event-stream).',
+  })
+  @ApiProduces('text/event-stream')
   async streamGreeting(
     @CurrentUser() user: AuthUser,
     @Param('chatRoomId') chatRoomId: string,
