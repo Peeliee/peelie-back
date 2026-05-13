@@ -1,4 +1,4 @@
-import { PersonalityType } from '@prisma/client';
+import { type PersonalityType } from '@prisma/client';
 
 export interface MeResponse {
   id: string;
