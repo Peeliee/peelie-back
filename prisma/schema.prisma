@@ -8,7 +8,6 @@
 
 generator client {
   provider        = "prisma-client-js"
-  output          = "../node_modules/.prisma/client"
   previewFeatures = ["postgresqlExtensions"]
 }
 
@@ -22,16 +21,14 @@ datasource db {
 // Enums
 // ============================================================
 
-// TODO(user): 실제 6개 타입 코드값 정해서 교체
-//   예시: ANALYZER, EXPLORER, HARMONIZER, ACHIEVER, GUARDIAN, DREAMER
-//   교체 시 prisma migrate dev 한 번 더 돌리면 됨
+// 6개 고정. UI 표시명/태그/시스템 프롬프트는 src/llm/prompts/personalities.ts 에 별도 매핑 (챗봇 단계)
 enum PersonalityType {
-  PERSONA_A
-  PERSONA_B
-  PERSONA_C
-  PERSONA_D
-  PERSONA_E
-  PERSONA_F
+  STRAIGHT_SHOOTER    // 직진 본능파
+  ENERGETIC_TALKER    // 불꽃토커
+  QUIET_CHARMER       // 조용한호감캐
+  ANALYTICAL_OBSERVER // 뇌풀가동 분석파
+  HEART_COLLECTOR     // 속마음 수집가
+  STAGE_SETTER        // 판깔기 전문가
 }
 
 enum AuthProvider {

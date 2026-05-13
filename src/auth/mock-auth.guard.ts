@@ -35,7 +35,7 @@ export class MockAuthGuard implements CanActivate, OnModuleInit {
       data: {
         email: MOCK_EMAIL,
         name: MOCK_NAME,
-        personality: PersonalityType.PERSONA_A,
+        personality: PersonalityType.STRAIGHT_SHOOTER,
         friendCode: MOCK_FRIEND_CODE,
         avatar: { create: {} },
       },
