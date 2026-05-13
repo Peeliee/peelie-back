@@ -8,6 +8,7 @@ import { z } from 'zod';
 
 import { LlmService, type ChatHistoryMessage } from '../llm/llm.service';
 import { PrismaService } from '../prisma/prisma.service';
+import type { ChatListItem } from './dto/chat-list-item.response';
 import type { ChatStreamEvent, MessageBubble } from './dto/chat-stream.event';
 import type { ChatRoomListItem } from './dto/chatroom-list-item.response';
 import type {
@@ -86,6 +87,52 @@ export class ChatService {
       return sort === 'recent' ? -diff : diff;
     });
 
+    return items;
+  }
+
+  /**
+   * AI챗 목록 화면. 모든 chatRoom (과거 약속 포함).
+   * 마지막 메시지 미리보기 + 안 읽음 표시 포함. lastMessageAt desc 정렬.
+   */
+  async findChatList(userId: string): Promise<ChatListItem[]> {
+    const rows = await this.prisma.chatRoom.findMany({
+      where: { schedule: { ownerId: userId } },
+      select: {
+        id: true,
+        createdAt: true,
+        lastReadAt: true,
+        schedule: {
+          select: {
+            friendUser: { select: { id: true, name: true, personality: true } },
+          },
+        },
+        messages: {
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+          select: { createdAt: true, bubbles: true },
+        },
+      },
+    });
+
+    const items: ChatListItem[] = rows.map((row) => {
+      const lastMsg = row.messages[0];
+      const lastMessageAt = lastMsg?.createdAt ?? row.createdAt;
+      const lastMessagePreview = lastMsg
+        ? truncate(joinBubbles(lastMsg.bubbles), 60)
+        : null;
+      const isUnread =
+        lastMsg !== undefined &&
+        (!row.lastReadAt || lastMessageAt > row.lastReadAt);
+      return {
+        chatRoomId: row.id,
+        friend: row.schedule.friendUser,
+        lastMessageAt,
+        lastMessagePreview,
+        isUnread,
+      };
+    });
+
+    items.sort((a, b) => b.lastMessageAt.getTime() - a.lastMessageAt.getTime());
     return items;
   }
 
@@ -170,6 +217,12 @@ export class ChatService {
       turn.suggestions,
     );
 
+    // 송수신 마친 직후 = 사용자가 다 봤다고 간주
+    await this.prisma.chatRoom.update({
+      where: { id: chatRoomId },
+      data: { lastReadAt: new Date() },
+    });
+
     yield { event: 'done', data: { chatRoomId } };
   }
 
@@ -190,10 +243,11 @@ export class ChatService {
 
     const shouldGreet = shouldSendGreeting(ctx.lastEnteredAt);
 
-    // 진입 시각은 skip/인사 여부와 무관하게 항상 업데이트
+    // 진입 시각 + 읽음 시각 둘 다 항상 업데이트 (skip 여부와 무관)
+    const now = new Date();
     await this.prisma.chatRoom.update({
       where: { id: chatRoomId },
-      data: { lastEnteredAt: new Date() },
+      data: { lastEnteredAt: now, lastReadAt: now },
     });
 
     if (!shouldGreet) {
@@ -325,6 +379,16 @@ export class ChatService {
 function parseBubbles(bubblesJson: Prisma.JsonValue): MessageBubble[] {
   const parsed = StoredBubblesSchema.safeParse(bubblesJson);
   return parsed.success ? parsed.data : [];
+}
+
+function joinBubbles(bubblesJson: Prisma.JsonValue): string {
+  return parseBubbles(bubblesJson)
+    .map((b) => b.text)
+    .join(' ');
+}
+
+function truncate(text: string, max: number): string {
+  return text.length > max ? `${text.slice(0, max)}...` : text;
 }
 
 /**
