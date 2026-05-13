@@ -7,6 +7,7 @@ import {
   Param,
   Post,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 import type { AuthUser } from '../auth/auth-user';
 import { CurrentUser } from '../auth/current-user.decorator';
@@ -14,6 +15,8 @@ import { CreateScheduleDto } from './dto/create-schedule.dto';
 import type { ScheduleResponse } from './dto/schedule.response';
 import { ScheduleService } from './schedule.service';
 
+@ApiTags('Schedule')
+@ApiBearerAuth('access-token')
 @Controller('schedules')
 export class ScheduleController {
   constructor(private readonly scheduleService: ScheduleService) {}

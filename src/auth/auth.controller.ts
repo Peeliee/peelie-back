@@ -6,6 +6,7 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 
 import { AuthService } from './auth.service';
 import { CurrentSignupContext } from './current-signup-context.decorator';
@@ -19,6 +20,7 @@ import { Public } from './public.decorator';
 import type { SignupContext } from './signup-context';
 import { SignupTokenGuard } from './signup-token.guard';
 
+@ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}

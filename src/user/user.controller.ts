@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Patch } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 import type { AuthUser } from '../auth/auth-user';
 import { CurrentUser } from '../auth/current-user.decorator';
@@ -6,6 +7,8 @@ import type { MeResponse } from './dto/me.response';
 import { UpdateMeDto } from './dto/update-me.dto';
 import { UserService } from './user.service';
 
+@ApiTags('User')
+@ApiBearerAuth('access-token')
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}

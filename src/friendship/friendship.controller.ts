@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Post,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 import type { AuthUser } from '../auth/auth-user';
 import { CurrentUser } from '../auth/current-user.decorator';
@@ -13,6 +14,8 @@ import { AddFriendshipDto } from './dto/add-friendship.dto';
 import type { FriendSummary } from './dto/friend-summary.response';
 import { FriendshipService } from './friendship.service';
 
+@ApiTags('Friendship')
+@ApiBearerAuth('access-token')
 @Controller('friendships')
 export class FriendshipController {
   constructor(private readonly friendshipService: FriendshipService) {}

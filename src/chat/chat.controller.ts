@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Param, Post, Query, Res } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { Response } from 'express';
 
 import type { AuthUser } from '../auth/auth-user';
@@ -9,6 +10,8 @@ import { ListMessagesDto } from './dto/list-messages.dto';
 import type { MessageListResponse } from './dto/message-list.response';
 import { SendMessageDto } from './dto/send-message.dto';
 
+@ApiTags('Chat')
+@ApiBearerAuth('access-token')
 @Controller('chatrooms')
 export class ChatController {
   constructor(private readonly chatService: ChatService) {}
@@ -22,8 +25,12 @@ export class ChatController {
     return this.chatService.findMessages(user.id, chatRoomId, query);
   }
 
-  // SSE: 사용자 메시지 전송 + 챗봇 멀티 버블 응답.
-  // body 받아야 하므로 NestJS @Sse(GET) 안 쓰고 raw Express response 직접 사용.
+  /**
+   * 사용자 메시지를 보내고 챗봇 멀티 버블 + 선지를 SSE 로 받는다.
+   * 이벤트 순서: meta → bubble × 1~4 → suggestions → done (실패 시 error).
+   * 응답 wrap 미적용 (text/event-stream raw).
+   */
+  @ApiOperation({ summary: '챗봇 메시지 보내기 (SSE)' })
   @Post(':chatRoomId/messages/stream')
   async streamMessage(
     @CurrentUser() user: AuthUser,
@@ -49,7 +56,12 @@ export class ChatController {
     res.end();
   }
 
-  // SSE: 채팅방 입장 시 호출. 그날 KST 기준 첫 입장이면 봇이 먼저 인사, 아니면 skip.
+  /**
+   * 채팅방 입장 시 호출. 그날(KST) 첫 입장이면 봇이 먼저 인사, 아니면 즉시 skip.
+   * 클라는 매번 호출하면 됨. 날짜 계산은 서버가 lastEnteredAt 기준 KST 비교.
+   * 응답 wrap 미적용 (text/event-stream raw).
+   */
+  @ApiOperation({ summary: '선제 인사 (SSE)' })
   @Post(':chatRoomId/greeting/stream')
   async streamGreeting(
     @CurrentUser() user: AuthUser,
