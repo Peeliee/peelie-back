@@ -4,7 +4,9 @@ import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
+import { ChatModule } from './chat/chat.module';
 import { FriendshipModule } from './friendship/friendship.module';
+import { LlmModule } from './llm/llm.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ScheduleModule } from './schedule/schedule.module';
 import { UserModule } from './user/user.module';
@@ -14,9 +16,11 @@ import { UserModule } from './user/user.module';
     ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
     AuthModule,
+    LlmModule,
     UserModule,
     FriendshipModule,
     ScheduleModule,
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [AppService],

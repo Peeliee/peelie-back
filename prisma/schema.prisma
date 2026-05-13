@@ -153,8 +153,10 @@ model Schedule {
 }
 
 model ChatRoom {
-  id         String @id @default(cuid())
-  scheduleId String @unique
+  id            String    @id @default(cuid())
+  scheduleId    String    @unique
+  // 마지막으로 사용자가 채팅방에 진입한 시각. 선제 인사 노출 여부 판단용.
+  lastEnteredAt DateTime?
 
   createdAt DateTime @default(now())
 
