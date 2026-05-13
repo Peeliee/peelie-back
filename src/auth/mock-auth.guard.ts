@@ -11,9 +11,31 @@ import type { Request } from 'express';
 import { PrismaService } from '../prisma/prisma.service';
 import type { AuthUser } from './auth-user';
 
-const MOCK_EMAIL = 'mock@peelie.dev';
-const MOCK_NAME = '목유저';
-const MOCK_FRIEND_CODE = 'mockcode';
+interface MockUserSeed {
+  email: string;
+  name: string;
+  personality: PersonalityType;
+  friendCode: string;
+}
+
+// 인증된 본인 (req.user 에 박힘)
+const MOCK_OWNER_EMAIL = 'mock@peelie.dev';
+
+// 시드되는 mock 유저들. 첫 번째가 owner, 나머지는 친추 대상 / 일정 친구 후보용
+const MOCK_USERS: MockUserSeed[] = [
+  {
+    email: MOCK_OWNER_EMAIL,
+    name: '목유저',
+    personality: PersonalityType.STRAIGHT_SHOOTER,
+    friendCode: 'mockcode',
+  },
+  {
+    email: 'mock2@peelie.dev',
+    name: '친구목유저',
+    personality: PersonalityType.QUIET_CHARMER,
+    friendCode: 'mockcode2',
+  },
+];
 
 @Injectable()
 export class MockAuthGuard implements CanActivate, OnModuleInit {
@@ -22,26 +44,31 @@ export class MockAuthGuard implements CanActivate, OnModuleInit {
   constructor(private readonly prisma: PrismaService) {}
 
   async onModuleInit(): Promise<void> {
-    const existing = await this.prisma.user.findFirst({
-      where: { email: MOCK_EMAIL },
-    });
-
-    if (existing) {
-      this.mockUser = { id: existing.id, name: existing.name };
-      return;
+    for (const seed of MOCK_USERS) {
+      await this.ensureSeeded(seed);
     }
 
-    const created = await this.prisma.user.create({
+    const owner = await this.prisma.user.findUniqueOrThrow({
+      where: { email: MOCK_OWNER_EMAIL },
+    });
+    this.mockUser = { id: owner.id, name: owner.name };
+  }
+
+  private async ensureSeeded(seed: MockUserSeed): Promise<void> {
+    const existing = await this.prisma.user.findFirst({
+      where: { email: seed.email },
+    });
+    if (existing) return;
+
+    await this.prisma.user.create({
       data: {
-        email: MOCK_EMAIL,
-        name: MOCK_NAME,
-        personality: PersonalityType.STRAIGHT_SHOOTER,
-        friendCode: MOCK_FRIEND_CODE,
+        email: seed.email,
+        name: seed.name,
+        personality: seed.personality,
+        friendCode: seed.friendCode,
         avatar: { create: {} },
       },
     });
-
-    this.mockUser = { id: created.id, name: created.name };
   }
 
   canActivate(context: ExecutionContext): boolean {
