@@ -23,7 +23,8 @@ export class ChatRoomListItem {
   meetDate!: Date;
 
   @ApiProperty({
-    description: '채팅방 마지막 메시지 시각. 메시지 없으면 chatRoom.createdAt fallback.',
+    description:
+      '채팅방 마지막 메시지 시각. 메시지 없으면 chatRoom.createdAt fallback.',
     example: '2026-05-13T03:52:35.610Z',
   })
   lastMessageAt!: Date;

@@ -5,7 +5,10 @@ export class AuthTokensDto {
   @ApiProperty({ description: '15분 TTL JWT', example: 'eyJhbGciOi...' })
   accessToken!: string;
 
-  @ApiProperty({ description: '14일 TTL JWT (DB hash 저장)', example: 'eyJhbGciOi...' })
+  @ApiProperty({
+    description: '14일 TTL JWT (DB hash 저장)',
+    example: 'eyJhbGciOi...',
+  })
   refreshToken!: string;
 }
 
@@ -19,7 +22,8 @@ export class SignInSignupResponseDto {
   type!: 'signup';
 
   @ApiProperty({
-    description: '10분 TTL signup JWT. 이어서 /auth/onboarding/complete 호출 시 Authorization 헤더에 사용.',
+    description:
+      '10분 TTL signup JWT. 이어서 /auth/onboarding/complete 호출 시 Authorization 헤더에 사용.',
     example: 'eyJhbGciOi...',
   })
   signupToken!: string;
@@ -35,7 +39,10 @@ export class OnboardedUserDto {
   @ApiProperty({ enum: PersonalityType })
   personality!: PersonalityType;
 
-  @ApiProperty({ example: 'abc12345', description: '8자 영숫자 영구 친구 코드' })
+  @ApiProperty({
+    example: 'abc12345',
+    description: '8자 영숫자 영구 친구 코드',
+  })
   friendCode!: string;
 }
 

@@ -2,6 +2,8 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   Post,
   Query,
@@ -9,6 +11,7 @@ import {
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
+  ApiNoContentResponse,
   ApiOperation,
   ApiProduces,
   ApiTags,
@@ -62,6 +65,30 @@ export class ChatController {
     @Query() query: ListMessagesDto,
   ): Promise<MessageListResponse> {
     return this.chatService.findMessages(user.id, chatRoomId, query);
+  }
+
+  @Post(':chatRoomId/read')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({
+    summary: '채팅방 읽음 처리',
+    description: [
+      '사용자가 이 채팅방의 어디까지 봤는지 서버에 기록 (lastReadAt = now()).',
+      '',
+      '**호출 시점 (프론트 가이드)**',
+      '- 채팅방 진입 시: greeting/stream 이 기존 메시지 read 처리를 겸하므로 별도 호출 생략 가능',
+      '- messages/stream done 시: 현재도 해당 채팅방 route 이고 화면 visible 이면 호출',
+      '- greeting/stream done 시: 새 greeting 메시지가 생성됐고 화면 visible 이면 호출',
+      '- 채팅방 unmount 또는 visibilitychange hidden 직전: 해당 채팅방 화면을 보고 있던 상태면 호출',
+      '',
+      '응답 wrap 미적용 (204 No Content).',
+    ].join('\n'),
+  })
+  @ApiNoContentResponse()
+  async markRead(
+    @CurrentUser() user: AuthUser,
+    @Param('chatRoomId') chatRoomId: string,
+  ): Promise<void> {
+    await this.chatService.markRead(user.id, chatRoomId);
   }
 
   /**

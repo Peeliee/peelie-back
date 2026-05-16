@@ -6,7 +6,8 @@ export class MessageBubbleDto {
 
   @ApiProperty({
     example: 1500,
-    description: '이 버블을 보여주기 전 클라가 대기할 시간 (ms). 첫 버블은 1500 고정.',
+    description:
+      '이 버블을 보여주기 전 클라가 대기할 시간 (ms). 첫 버블은 1500 고정.',
     minimum: 0,
     maximum: 2500,
   })

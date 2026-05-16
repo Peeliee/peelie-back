@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"pnpm exec tsc --noEmit 2>&1 && echo \\\"---build---\\\" && pnpm run build 2>&1 | tail -3\",\"description\":\"Verify build with swagger\"}",
-  "error": "Exit code 2\nsrc/chat/chat.controller.ts(12,2): error TS2304: Cannot find name 'ApiTags'.\nsrc/chat/chat.controller.ts(13,2): error TS2304: Cannot find name 'ApiBearerAuth'.\nsrc/chat/chat.controller.ts(32,4): error TS2304: Cannot find name 'ApiOperation'.\nsrc/chat/chat.controller.ts(63,4): error TS2304: Cannot find name 'ApiOperation'.",
-  "timestamp": "2026-05-13T04:14:03.857Z",
-  "retry_count": 1
-}

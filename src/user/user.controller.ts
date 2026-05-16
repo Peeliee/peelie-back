@@ -16,7 +16,9 @@ export class UserController {
 
   @Get('me')
   @ApiOperation({ summary: '내 프로필 조회' })
-  @ApiOkResponseWrapped(MeResponse, { description: '내 정보 (friendCode 포함)' })
+  @ApiOkResponseWrapped(MeResponse, {
+    description: '내 정보 (friendCode 포함)',
+  })
   getMe(@CurrentUser() user: AuthUser): Promise<MeResponse> {
     return this.userService.findById(user.id);
   }
