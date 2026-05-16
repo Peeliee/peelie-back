@@ -4,7 +4,8 @@ import { IsDateString, IsInt, IsOptional, Max, Min } from 'class-validator';
 
 export class ListMessagesDto {
   @ApiPropertyOptional({
-    description: '이 시각 "이전" 메시지를 limit 개수만큼 반환. 무한스크롤 cursor.',
+    description:
+      '이 시각 "이전" 메시지를 limit 개수만큼 반환. 무한스크롤 cursor.',
     example: '2026-05-13T03:52:35.610Z',
   })
   @IsOptional()

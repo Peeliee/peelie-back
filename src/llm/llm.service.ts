@@ -15,8 +15,8 @@ const ChatTurnSchema = z.object({
       }),
     )
     .min(1)
-    .max(4),
-  suggestions: z.array(z.string().min(1).max(12)).length(3),
+    .max(3),
+  suggestions: z.array(z.string().min(1).max(30)).length(3),
 });
 
 export type ChatTurn = z.infer<typeof ChatTurnSchema>;

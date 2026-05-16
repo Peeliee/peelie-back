@@ -6,7 +6,11 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { ApiOperation, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
+import {
+  ApiOperation,
+  ApiTags,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
 
 import { ApiErrorResponseDto } from '../common/dto/api-response.dto';
 import {
@@ -48,9 +52,13 @@ export class AuthController {
       '진짜 카카오/Apple OAuth 붙기 전 임시 입구. (provider, providerUserId) 를 받아 ' +
       '기존 계정이면 login 응답, 신규면 signupToken 발급. signupToken 으로 onboarding/complete 호출.',
   })
-  @ApiOkResponseWrappedOneOf([SignInLoginResponseDto, SignInSignupResponseDto], {
-    description: '기존 계정: SignInLoginResponseDto / 신규: SignInSignupResponseDto',
-  })
+  @ApiOkResponseWrappedOneOf(
+    [SignInLoginResponseDto, SignInSignupResponseDto],
+    {
+      description:
+        '기존 계정: SignInLoginResponseDto / 신규: SignInSignupResponseDto',
+    },
+  )
   issueSignupToken(
     @Body() dto: IssueSignupTokenDto,
   ): Promise<IssueSignupTokenResponse> {
@@ -70,9 +78,13 @@ export class AuthController {
       '카카오 redirect_uri 로 받은 authorization code 를 백엔드가 토큰 + 사용자 정보로 교환. ' +
       '기존 회원: login 응답 (access/refresh). 신규 회원: signupToken 응답 → /auth/onboarding/complete 호출.',
   })
-  @ApiOkResponseWrappedOneOf([SignInLoginResponseDto, SignInSignupResponseDto], {
-    description: '기존 회원: SignInLoginResponseDto / 신규: SignInSignupResponseDto',
-  })
+  @ApiOkResponseWrappedOneOf(
+    [SignInLoginResponseDto, SignInSignupResponseDto],
+    {
+      description:
+        '기존 회원: SignInLoginResponseDto / 신규: SignInSignupResponseDto',
+    },
+  )
   @ApiUnauthorizedResponse({
     type: ApiErrorResponseDto,
     description: '카카오 인증 코드 교환 또는 사용자 정보 조회 실패',

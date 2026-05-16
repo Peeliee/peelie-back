@@ -19,7 +19,8 @@ export class ChatListController {
     description:
       '모든 채팅방 (과거 약속도 포함). lastMessageAt desc 정렬. ' +
       'lastMessagePreview 는 마지막 메시지의 bubbles 텍스트 join + 60자 자름. ' +
-      'isUnread 는 lastMessageAt > lastReadAt 일 때 true (lastReadAt 은 채팅방 진입/메시지 송수신 시 자동 갱신).',
+      'isUnread 는 마지막 메시지 createdAt > lastReadAt 일 때 true. ' +
+      'lastReadAt 은 채팅방 진입 부수효과 또는 명시적 /read 호출로 갱신.',
   })
   @ApiOkResponseWrapped(ChatListItem, { isArray: true })
   list(@CurrentUser() user: AuthUser): Promise<ChatListItem[]> {

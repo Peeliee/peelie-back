@@ -31,13 +31,15 @@ export class ApiErrorResponseDto {
 
   @ApiProperty({
     example: 'BAD_REQUEST',
-    description: 'HTTP status text 를 SNAKE_CASE 로 매핑 (BAD_REQUEST / NOT_FOUND / CONFLICT ...)',
+    description:
+      'HTTP status text 를 SNAKE_CASE 로 매핑 (BAD_REQUEST / NOT_FOUND / CONFLICT ...)',
   })
   code!: string;
 
   @ApiProperty({
     example: 'name must be shorter than or equal to 20 characters',
-    description: '디버깅용 상세 사유. class-validator 다중 메시지는 "; " 으로 join',
+    description:
+      '디버깅용 상세 사유. class-validator 다중 메시지는 "; " 으로 join',
   })
   reason!: string;
 }

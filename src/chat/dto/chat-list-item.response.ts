@@ -21,7 +21,8 @@ export class ChatListItem {
 
   @ApiProperty({
     example: '2026-05-13T03:52:35.610Z',
-    description: '마지막 메시지 시각. 메시지 없으면 chatRoom.createdAt fallback.',
+    description:
+      '마지막 메시지 시각. 메시지 없으면 chatRoom.createdAt fallback.',
   })
   lastMessageAt!: Date;
 
@@ -35,7 +36,7 @@ export class ChatListItem {
 
   @ApiProperty({
     description:
-      'lastMessageAt > lastReadAt 이면 true. lastReadAt 은 채팅방 진입 / 메시지 송수신 시 자동 갱신.',
+      '마지막 메시지 createdAt > lastReadAt 이면 true. lastReadAt 은 채팅방 진입 부수효과 또는 명시적 /read 호출로 갱신.',
   })
   isUnread!: boolean;
 }

@@ -217,12 +217,6 @@ export class ChatService {
       turn.suggestions,
     );
 
-    // 송수신 마친 직후 = 사용자가 다 봤다고 간주
-    await this.prisma.chatRoom.update({
-      where: { id: chatRoomId },
-      data: { lastReadAt: new Date() },
-    });
-
     yield { event: 'done', data: { chatRoomId } };
   }
 
@@ -283,6 +277,14 @@ export class ChatService {
     });
 
     yield { event: 'done', data: { chatRoomId } };
+  }
+
+  async markRead(userId: string, chatRoomId: string): Promise<void> {
+    await this.assertOwned(userId, chatRoomId);
+    await this.prisma.chatRoom.update({
+      where: { id: chatRoomId },
+      data: { lastReadAt: new Date() },
+    });
   }
 
   private async loadChatContext(userId: string, chatRoomId: string) {

@@ -158,7 +158,7 @@ model ChatRoom {
   // 마지막으로 사용자가 채팅방에 진입한 시각. 선제 인사 노출 여부 판단용.
   lastEnteredAt DateTime?
   // 마지막으로 사용자가 "읽음" 처리한 시각.
-  // greeting/messages stream 끝날 때 자동 갱신.
+  // 채팅방 진입 부수효과 또는 명시적 /read 호출로 갱신.
   // isUnread = (lastMessageAt > lastReadAt) 판단용.
   lastReadAt    DateTime?
 

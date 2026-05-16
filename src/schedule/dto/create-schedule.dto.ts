@@ -3,7 +3,8 @@ import { IsDateString, IsString, MaxLength, MinLength } from 'class-validator';
 
 export class CreateScheduleDto {
   @ApiProperty({
-    description: '친구로 등록된 user 의 id (cuid). 본인의 Friendship 에 있어야 함.',
+    description:
+      '친구로 등록된 user 의 id (cuid). 본인의 Friendship 에 있어야 함.',
     example: 'cmp...',
   })
   @IsString()

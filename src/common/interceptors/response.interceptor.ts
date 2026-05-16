@@ -17,20 +17,26 @@ import type { ApiSuccessResponse } from '../dto/api-response.dto';
 @Injectable()
 export class ResponseInterceptor<T> implements NestInterceptor<
   T,
-  ApiSuccessResponse<T>
+  ApiSuccessResponse<T> | undefined
 > {
   intercept(
     context: ExecutionContext,
     next: CallHandler<T>,
-  ): Observable<ApiSuccessResponse<T>> {
+  ): Observable<ApiSuccessResponse<T> | undefined> {
     const response = context.switchToHttp().getResponse<Response>();
     return next.handle().pipe(
-      map((data) => ({
-        status: response.statusCode || HttpStatus.OK,
-        success: true as const,
-        message: 'OK',
-        data,
-      })),
+      map((data) => {
+        const statusCode = response.statusCode || HttpStatus.OK;
+        if (statusCode === 204) {
+          return undefined;
+        }
+        return {
+          status: statusCode,
+          success: true as const,
+          message: 'OK',
+          data,
+        };
+      }),
     );
   }
 }
