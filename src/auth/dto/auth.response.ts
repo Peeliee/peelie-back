@@ -2,11 +2,11 @@ import { ApiProperty } from '@nestjs/swagger';
 import { PersonalityType } from '@prisma/client';
 
 export class AuthTokensDto {
-  @ApiProperty({ description: '15분 TTL JWT', example: 'eyJhbGciOi...' })
+  @ApiProperty({ description: '365일 TTL JWT (MVP)', example: 'eyJhbGciOi...' })
   accessToken!: string;
 
   @ApiProperty({
-    description: '14일 TTL JWT (DB hash 저장)',
+    description: '365일 TTL JWT (DB hash 저장)',
     example: 'eyJhbGciOi...',
   })
   refreshToken!: string;
