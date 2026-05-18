@@ -17,9 +17,9 @@ import { generateFriendCode } from './friend-code.util';
 import { KakaoOAuthClient } from './kakao-oauth.client';
 import type { SignupContext } from './signup-context';
 
-const ACCESS_TTL = '15m';
-const REFRESH_TTL = '14d';
-const REFRESH_TTL_MS = 14 * 24 * 60 * 60 * 1000;
+const ACCESS_TTL = '365d';
+const REFRESH_TTL = '365d';
+const REFRESH_TTL_MS = 365 * 24 * 60 * 60 * 1000;
 const SIGNUP_TTL = '10m';
 
 const FRIEND_CODE_MAX_RETRY = 5;
