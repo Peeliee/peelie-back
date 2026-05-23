@@ -6,6 +6,7 @@ import {
 import { MessageRole, Prisma } from '@prisma/client';
 import { z } from 'zod';
 
+import { kstTodayAsUtc } from '../common/utils/kst';
 import { LlmService, type ChatHistoryMessage } from '../llm/llm.service';
 import { PrismaService } from '../prisma/prisma.service';
 import type { ChatListItem } from './dto/chat-list-item.response';
@@ -62,6 +63,7 @@ export class ChatService {
         schedule: {
           select: {
             meetDate: true,
+            createdAt: true,
             friendUser: {
               select: { id: true, name: true, personality: true },
             },
@@ -79,6 +81,7 @@ export class ChatService {
       chatRoomId: row.id,
       friend: row.schedule.friendUser,
       meetDate: row.schedule.meetDate,
+      registeredAt: row.schedule.createdAt,
       lastMessageAt: row.messages[0]?.createdAt ?? row.createdAt,
     }));
 
@@ -118,7 +121,7 @@ export class ChatService {
       const lastMsg = row.messages[0];
       const lastMessageAt = lastMsg?.createdAt ?? row.createdAt;
       const lastMessagePreview = lastMsg
-        ? truncate(joinBubbles(lastMsg.bubbles), 60)
+        ? truncate(lastBubbleText(lastMsg.bubbles), 60)
         : null;
       const isUnread =
         lastMsg !== undefined &&
@@ -383,30 +386,13 @@ function parseBubbles(bubblesJson: Prisma.JsonValue): MessageBubble[] {
   return parsed.success ? parsed.data : [];
 }
 
-function joinBubbles(bubblesJson: Prisma.JsonValue): string {
-  return parseBubbles(bubblesJson)
-    .map((b) => b.text)
-    .join(' ');
+function lastBubbleText(bubblesJson: Prisma.JsonValue): string {
+  const bubbles = parseBubbles(bubblesJson);
+  return bubbles[bubbles.length - 1]?.text ?? '';
 }
 
 function truncate(text: string, max: number): string {
   return text.length > max ? `${text.slice(0, max)}...` : text;
-}
-
-/**
- * KST 기준 "오늘 자정" 의 UTC 표현 Date.
- * 한국 사용자 입장의 "오늘 (이후)" 약속을 정확히 골라내기 위한 기준점.
- */
-function kstTodayAsUtc(): Date {
-  // Intl 로 KST 오늘 YYYY-MM-DD 추출
-  const kstDateString = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Asia/Seoul',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(new Date());
-  // meetDate 는 Prisma 가 @db.Date 컬럼을 UTC 자정으로 반환하므로 비교도 UTC 자정으로
-  return new Date(`${kstDateString}T00:00:00.000Z`);
 }
 
 function daysUntil(date: Date): number {
