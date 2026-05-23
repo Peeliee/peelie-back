@@ -28,9 +28,9 @@ export class ChatListItem {
 
   @ApiProperty({
     nullable: true,
-    example: '그럼 너는 쉬는 시간에 주로 OTT 보는 편이야? 영화 같이 ...',
+    example: '비포 선라이즈 느낌도 나고~',
     description:
-      '마지막 메시지 미리보기. 메시지의 bubbles 텍스트들을 " " 으로 join 후 60자로 자름 (...). 메시지 없으면 null.',
+      '마지막 메시지의 마지막 버블 텍스트 (60자 초과 시 ... 로 자름). 메시지 없으면 null.',
   })
   lastMessagePreview!: string | null;
 

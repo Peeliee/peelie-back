@@ -121,7 +121,7 @@ export class ChatService {
       const lastMsg = row.messages[0];
       const lastMessageAt = lastMsg?.createdAt ?? row.createdAt;
       const lastMessagePreview = lastMsg
-        ? truncate(joinBubbles(lastMsg.bubbles), 60)
+        ? truncate(lastBubbleText(lastMsg.bubbles), 60)
         : null;
       const isUnread =
         lastMsg !== undefined &&
@@ -386,10 +386,9 @@ function parseBubbles(bubblesJson: Prisma.JsonValue): MessageBubble[] {
   return parsed.success ? parsed.data : [];
 }
 
-function joinBubbles(bubblesJson: Prisma.JsonValue): string {
-  return parseBubbles(bubblesJson)
-    .map((b) => b.text)
-    .join(' ');
+function lastBubbleText(bubblesJson: Prisma.JsonValue): string {
+  const bubbles = parseBubbles(bubblesJson);
+  return bubbles[bubbles.length - 1]?.text ?? '';
 }
 
 function truncate(text: string, max: number): string {

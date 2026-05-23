@@ -18,7 +18,7 @@ export class ChatListController {
     summary: 'AI챗 목록 (모든 chatRoom, 미리보기 + 안 읽음 포함)',
     description:
       '모든 채팅방 (과거 약속도 포함). lastMessageAt desc 정렬. ' +
-      'lastMessagePreview 는 마지막 메시지의 bubbles 텍스트 join + 60자 자름. ' +
+      'lastMessagePreview 는 마지막 메시지의 마지막 버블 텍스트 (60자 초과 시 ... 로 자름). ' +
       'isUnread 는 마지막 메시지 createdAt > lastReadAt 일 때 true. ' +
       'lastReadAt 은 채팅방 진입 부수효과 또는 명시적 /read 호출로 갱신.',
   })
