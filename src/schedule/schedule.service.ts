@@ -3,9 +3,15 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import type { Prisma } from '@prisma/client';
 
+import { kstTodayAsUtc } from '../common/utils/kst';
 import { PrismaService } from '../prisma/prisma.service';
 import type { CreateScheduleDto } from './dto/create-schedule.dto';
+import type {
+  ListSchedulesDto,
+  ScheduleFilter,
+} from './dto/list-schedules.dto';
 import type { ScheduleResponse } from './dto/schedule.response';
 
 const SCHEDULE_SELECT = {
@@ -38,9 +44,20 @@ function assertChatRoom(row: ScheduleRow): ScheduleResponse {
 export class ScheduleService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAllForUser(ownerId: string): Promise<ScheduleResponse[]> {
+  async findAllForUser(
+    ownerId: string,
+    opts: ListSchedulesDto,
+  ): Promise<ScheduleResponse[]> {
+    const filter: ScheduleFilter = opts.filter ?? 'upcoming';
+    const where: Prisma.ScheduleWhereInput = { ownerId };
+
+    if (filter !== 'all') {
+      const today = kstTodayAsUtc();
+      where.meetDate = filter === 'upcoming' ? { gte: today } : { lt: today };
+    }
+
     const rows = await this.prisma.schedule.findMany({
-      where: { ownerId },
+      where,
       orderBy: { meetDate: 'desc' },
       select: SCHEDULE_SELECT,
     });

@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Param,
   Post,
+  Query,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -20,6 +21,7 @@ import { CurrentUser } from '../auth/current-user.decorator';
 import { ApiOkResponseWrapped } from '../common/decorators/api-ok-response-wrapped.decorator';
 import { ApiErrorResponseDto } from '../common/dto/api-response.dto';
 import { CreateScheduleDto } from './dto/create-schedule.dto';
+import { ListSchedulesDto } from './dto/list-schedules.dto';
 import { ScheduleResponse } from './dto/schedule.response';
 import { ScheduleService } from './schedule.service';
 
@@ -31,11 +33,18 @@ export class ScheduleController {
 
   @Get()
   @ApiOperation({
-    summary: '내 일정 목록 (meetDate desc, 과거 + 미래 모두)',
+    summary: '내 일정 목록 (meetDate desc)',
+    description:
+      '?filter=upcoming (default): KST 오늘 + 미래 약속. ' +
+      '?filter=past: 어제까지의 약속. ' +
+      '?filter=all: 전체.',
   })
   @ApiOkResponseWrapped(ScheduleResponse, { isArray: true })
-  list(@CurrentUser() user: AuthUser): Promise<ScheduleResponse[]> {
-    return this.scheduleService.findAllForUser(user.id);
+  list(
+    @CurrentUser() user: AuthUser,
+    @Query() query: ListSchedulesDto,
+  ): Promise<ScheduleResponse[]> {
+    return this.scheduleService.findAllForUser(user.id, query);
   }
 
   @Get(':id')
