@@ -63,6 +63,7 @@ export class ChatService {
         schedule: {
           select: {
             meetDate: true,
+            createdAt: true,
             friendUser: {
               select: { id: true, name: true, personality: true },
             },
@@ -80,6 +81,7 @@ export class ChatService {
       chatRoomId: row.id,
       friend: row.schedule.friendUser,
       meetDate: row.schedule.meetDate,
+      registeredAt: row.schedule.createdAt,
       lastMessageAt: row.messages[0]?.createdAt ?? row.createdAt,
     }));
 
