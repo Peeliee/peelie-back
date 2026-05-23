@@ -11,6 +11,7 @@ import type { CreateScheduleDto } from './dto/create-schedule.dto';
 import type {
   ListSchedulesDto,
   ScheduleFilter,
+  ScheduleOrder,
 } from './dto/list-schedules.dto';
 import type { ScheduleResponse } from './dto/schedule.response';
 
@@ -49,6 +50,7 @@ export class ScheduleService {
     opts: ListSchedulesDto,
   ): Promise<ScheduleResponse[]> {
     const filter: ScheduleFilter = opts.filter ?? 'upcoming';
+    const order: ScheduleOrder = opts.order ?? 'desc';
     const where: Prisma.ScheduleWhereInput = { ownerId };
 
     if (filter !== 'all') {
@@ -58,7 +60,7 @@ export class ScheduleService {
 
     const rows = await this.prisma.schedule.findMany({
       where,
-      orderBy: { meetDate: 'desc' },
+      orderBy: { meetDate: order },
       select: SCHEDULE_SELECT,
     });
     return rows.map(assertChatRoom);

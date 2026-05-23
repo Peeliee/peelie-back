@@ -33,11 +33,12 @@ export class ScheduleController {
 
   @Get()
   @ApiOperation({
-    summary: '내 일정 목록 (meetDate desc)',
+    summary: '내 일정 목록',
     description:
       '?filter=upcoming (default): KST 오늘 + 미래 약속. ' +
       '?filter=past: 어제까지의 약속. ' +
-      '?filter=all: 전체.',
+      '?filter=all: 전체. ' +
+      '?order=desc (default): 최신 약속이 위. ?order=asc: 오래된 약속이 위.',
   })
   @ApiOkResponseWrapped(ScheduleResponse, { isArray: true })
   list(
