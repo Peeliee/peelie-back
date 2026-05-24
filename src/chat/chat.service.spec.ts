@@ -14,6 +14,9 @@ function createService() {
       findMany: jest.fn(),
       create: jest.fn(),
     },
+    friendship: {
+      findUnique: jest.fn().mockResolvedValue({ id: 'fs-1' }),
+    },
     $transaction: jest.fn(),
   };
   const llmService = {

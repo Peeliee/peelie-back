@@ -1,14 +1,17 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
+  Param,
   Post,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiConflictResponse,
+  ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiOperation,
   ApiTags,
@@ -56,5 +59,25 @@ export class FriendshipController {
     @Body() dto: AddFriendshipDto,
   ): Promise<FriendSummary> {
     return this.friendshipService.addByFriendCode(user.id, dto.friendCode);
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({
+    summary: '친구 삭제',
+    description:
+      ':id 는 친구의 user id (GET /friendships 응답의 friend.id). ' +
+      '본인의 Friendship row 만 삭제. 없는 친구면 404. 응답 wrap 미적용 (204).',
+  })
+  @ApiNoContentResponse()
+  @ApiNotFoundResponse({
+    type: ApiErrorResponseDto,
+    description: '해당 친구 관계가 없음',
+  })
+  async remove(
+    @CurrentUser() user: AuthUser,
+    @Param('id') friendUserId: string,
+  ): Promise<void> {
+    await this.friendshipService.remove(user.id, friendUserId);
   }
 }
