@@ -10,4 +10,10 @@ export class FriendSummary {
 
   @ApiProperty({ enum: PersonalityType })
   personality!: PersonalityType;
+
+  @ApiProperty({
+    description: '탈뢰한 사용자면 true. 프론트가 "탈뢰한 사용자" 표시.',
+    example: false,
+  })
+  isDeleted!: boolean;
 }

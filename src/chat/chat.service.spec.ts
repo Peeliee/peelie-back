@@ -58,6 +58,7 @@ describe('ChatService', () => {
           id: 'friend-1',
           name: '친구',
           personality: PersonalityType.STRAIGHT_SHOOTER,
+          deletedAt: null,
         },
       },
     });
@@ -96,6 +97,7 @@ describe('ChatService', () => {
             id: 'friend-1',
             name: '친구',
             personality: PersonalityType.STRAIGHT_SHOOTER,
+            deletedAt: null,
           },
         },
         messages: [

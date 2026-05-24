@@ -51,6 +51,8 @@ model User {
   name        String
   personality PersonalityType
   friendCode  String          @unique
+  // soft delete 마커. null 이면 활성 사용자. 탈퇴 시 NOW() + friendCode 에 __deleted__{ts} suffix.
+  deletedAt   DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -69,6 +71,9 @@ model Account {
   userId         String
   provider       AuthProvider
   providerUserId String
+  // provider 의 refresh token (Apple 만 사용 — 회원탈뢰 시 revoke 호출용).
+  // 카카오는 사용 안 함. 첫 가입 시점에만 받을 수 있어서 신규 가입 흐름에서 저장.
+  refreshToken   String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

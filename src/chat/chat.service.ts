@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -65,7 +66,12 @@ export class ChatService {
             meetDate: true,
             createdAt: true,
             friendUser: {
-              select: { id: true, name: true, personality: true },
+              select: {
+                id: true,
+                name: true,
+                personality: true,
+                deletedAt: true,
+              },
             },
           },
         },
@@ -79,7 +85,12 @@ export class ChatService {
 
     const items: ChatRoomListItem[] = rows.map((row) => ({
       chatRoomId: row.id,
-      friend: row.schedule.friendUser,
+      friend: {
+        id: row.schedule.friendUser.id,
+        name: row.schedule.friendUser.name,
+        personality: row.schedule.friendUser.personality,
+        isDeleted: row.schedule.friendUser.deletedAt !== null,
+      },
       meetDate: row.schedule.meetDate,
       registeredAt: row.schedule.createdAt,
       lastMessageAt: row.messages[0]?.createdAt ?? row.createdAt,
@@ -106,7 +117,14 @@ export class ChatService {
         lastReadAt: true,
         schedule: {
           select: {
-            friendUser: { select: { id: true, name: true, personality: true } },
+            friendUser: {
+              select: {
+                id: true,
+                name: true,
+                personality: true,
+                deletedAt: true,
+              },
+            },
           },
         },
         messages: {
@@ -128,7 +146,12 @@ export class ChatService {
         (!row.lastReadAt || lastMessageAt > row.lastReadAt);
       return {
         chatRoomId: row.id,
-        friend: row.schedule.friendUser,
+        friend: {
+          id: row.schedule.friendUser.id,
+          name: row.schedule.friendUser.name,
+          personality: row.schedule.friendUser.personality,
+          isDeleted: row.schedule.friendUser.deletedAt !== null,
+        },
         lastMessageAt,
         lastMessagePreview,
         isUnread,
@@ -185,6 +208,12 @@ export class ChatService {
   ): AsyncGenerator<ChatStreamEvent> {
     const ctx = await this.loadChatContext(userId, chatRoomId);
 
+    if (ctx.friendUser.deletedAt !== null) {
+      throw new BadRequestException(
+        '탈뢰한 사용자와는 새 대화를 할 수 없습니다',
+      );
+    }
+
     yield {
       event: 'meta',
       data: {
@@ -228,6 +257,12 @@ export class ChatService {
     chatRoomId: string,
   ): AsyncGenerator<ChatStreamEvent> {
     const ctx = await this.loadChatContext(userId, chatRoomId);
+
+    if (ctx.friendUser.deletedAt !== null) {
+      throw new BadRequestException(
+        '탈뢰한 사용자와는 새 대화를 할 수 없습니다',
+      );
+    }
 
     yield {
       event: 'meta',
@@ -301,7 +336,12 @@ export class ChatService {
             meetDate: true,
             owner: { select: { id: true, name: true } },
             friendUser: {
-              select: { id: true, name: true, personality: true },
+              select: {
+                id: true,
+                name: true,
+                personality: true,
+                deletedAt: true,
+              },
             },
           },
         },

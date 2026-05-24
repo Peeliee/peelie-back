@@ -21,24 +21,39 @@ const SCHEDULE_SELECT = {
   description: true,
   createdAt: true,
   friendUser: {
-    select: { id: true, name: true, personality: true },
+    select: { id: true, name: true, personality: true, deletedAt: true },
   },
   chatRoom: {
     select: { id: true },
   },
 } as const;
 
-type ScheduleRow = Omit<ScheduleResponse, 'chatRoom'> & {
+type ScheduleRow = Omit<ScheduleResponse, 'chatRoom' | 'friendUser'> & {
   chatRoom: { id: string } | null;
+  friendUser: {
+    id: string;
+    name: string;
+    personality: ScheduleResponse['friendUser']['personality'];
+    deletedAt: Date | null;
+  };
 };
 
 // Schema 상 Schedule:ChatRoom 은 1:0..1 이지만 우리는 등록 시점에 항상 같이 생성한다.
 // 따라서 null 은 데이터 정합성 깨짐 → 명시적으로 에러.
-function assertChatRoom(row: ScheduleRow): ScheduleResponse {
+function toScheduleResponse(row: ScheduleRow): ScheduleResponse {
   if (!row.chatRoom) {
     throw new Error(`Schedule ${row.id} has no chat room`);
   }
-  return { ...row, chatRoom: row.chatRoom };
+  return {
+    ...row,
+    chatRoom: row.chatRoom,
+    friendUser: {
+      id: row.friendUser.id,
+      name: row.friendUser.name,
+      personality: row.friendUser.personality,
+      isDeleted: row.friendUser.deletedAt !== null,
+    },
+  };
 }
 
 @Injectable()
@@ -63,7 +78,7 @@ export class ScheduleService {
       orderBy: { meetDate: order },
       select: SCHEDULE_SELECT,
     });
-    return rows.map(assertChatRoom);
+    return rows.map(toScheduleResponse);
   }
 
   async findOneForUser(
@@ -77,7 +92,7 @@ export class ScheduleService {
     if (!row) {
       throw new NotFoundException('일정을 찾을 수 없습니다');
     }
-    return assertChatRoom(row);
+    return toScheduleResponse(row);
   }
 
   async create(
@@ -95,9 +110,15 @@ export class ScheduleService {
           friendUserId: dto.friendUserId,
         },
       },
+      include: { friendUser: { select: { deletedAt: true } } },
     });
     if (!friendship) {
       throw new BadRequestException('친구 목록에 없는 유저입니다');
+    }
+    if (friendship.friendUser.deletedAt !== null) {
+      throw new BadRequestException(
+        '탈뢰한 사용자와는 새 약속을 만들 수 없습니다',
+      );
     }
 
     const created = await this.prisma.schedule.create({
@@ -111,6 +132,6 @@ export class ScheduleService {
       select: SCHEDULE_SELECT,
     });
 
-    return assertChatRoom(created);
+    return toScheduleResponse(created);
   }
 }

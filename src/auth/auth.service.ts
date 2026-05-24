@@ -8,6 +8,7 @@ import { AuthProvider, type PersonalityType, Prisma } from '@prisma/client';
 import { createHash, randomUUID } from 'crypto';
 
 import { PrismaService } from '../prisma/prisma.service';
+import { AppleOAuthClient } from './apple-oauth.client';
 import type {
   AuthTokens,
   CompleteOnboardingResponse,
@@ -30,6 +31,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly kakaoClient: KakaoOAuthClient,
+    private readonly appleClient: AppleOAuthClient,
   ) {}
 
   /**
@@ -43,24 +45,55 @@ export class AuthService {
   }
 
   /**
+   * 카카오 네이티브 앱 로그인: 앱이 SDK 로 받은 access token 을 서버가 받아
+   * kapi.kakao.com 으로 사용자 ID 조회 후 분기.
+   */
+  async signInWithKakaoApp(
+    accessToken: string,
+  ): Promise<IssueSignupTokenResponse> {
+    const kakaoUser = await this.kakaoClient.fetchUser(accessToken);
+    return this.issueByProvider(AuthProvider.KAKAO, String(kakaoUser.id));
+  }
+
+  /**
+   * Apple 네이티브 앱 로그인: authorization code 를 서버에서 검증.
+   * .p8 으로 client_secret 서명 → Apple 토큰 엔드포인트 호출 → id_token 검증.
+   * payload.sub = Apple 안정적 user ID. 기존 계정이면 login, 신규면 signupToken.
+   */
+  async signInWithAppleApp(
+    authorizationCode: string,
+  ): Promise<IssueSignupTokenResponse> {
+    const { sub, refreshToken } =
+      await this.appleClient.verifyAuthorizationCode(authorizationCode);
+    return this.issueByProvider(AuthProvider.APPLE, sub, refreshToken);
+  }
+
+  /**
    * 소셜 provider 식별자로 기존 계정 조회.
    * 있으면 access/refresh 발급, 없으면 signupToken 발급.
+   *
+   * providerRefreshToken 은 Apple 신규 가입 시점에만 들어옴.
+   * 가입 흐름을 위해 signupToken JWT payload 에 함께 박아 onboarding 완료 시 Account 에 저장.
+   * 탈퇴(soft delete)한 사용자의 Account 는 providerUserId 에 suffix 가 붙어있어
+   * 자연스럽게 매칭 실패 → 신규 가입 흐름으로 빠짐.
    */
   async issueByProvider(
     provider: AuthProvider,
     providerUserId: string,
+    providerRefreshToken?: string,
   ): Promise<IssueSignupTokenResponse> {
     const account = await this.prisma.account.findUnique({
       where: { provider_providerUserId: { provider, providerUserId } },
+      include: { user: { select: { deletedAt: true } } },
     });
 
-    if (account) {
+    if (account && !account.user.deletedAt) {
       const tokens = await this.issueAuthTokens(account.userId);
       return { type: 'login', ...tokens };
     }
 
     const signupToken = this.jwtService.sign(
-      { type: 'signup', provider, providerUserId },
+      { type: 'signup', provider, providerUserId, providerRefreshToken },
       {
         secret: this.requireSecret('JWT_SIGNUP_SECRET'),
         expiresIn: SIGNUP_TTL,
@@ -126,6 +159,7 @@ export class AuthService {
               create: {
                 provider: ctx.provider,
                 providerUserId: ctx.providerUserId,
+                refreshToken: ctx.providerRefreshToken,
               },
             },
           },

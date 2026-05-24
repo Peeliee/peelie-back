@@ -13,7 +13,22 @@ const FRIEND_SELECT = {
   id: true,
   name: true,
   personality: true,
+  deletedAt: true,
 } as const;
+
+function toFriendSummary(row: {
+  id: string;
+  name: string;
+  personality: FriendSummary['personality'];
+  deletedAt: Date | null;
+}): FriendSummary {
+  return {
+    id: row.id,
+    name: row.name,
+    personality: row.personality,
+    isDeleted: row.deletedAt !== null,
+  };
+}
 
 @Injectable()
 export class FriendshipService {
@@ -25,7 +40,7 @@ export class FriendshipService {
       orderBy: { createdAt: 'desc' },
       include: { friendUser: { select: FRIEND_SELECT } },
     });
-    return rows.map((row) => row.friendUser);
+    return rows.map((row) => toFriendSummary(row.friendUser));
   }
 
   async addByFriendCode(
@@ -36,7 +51,7 @@ export class FriendshipService {
       where: { friendCode },
       select: FRIEND_SELECT,
     });
-    if (!friend) {
+    if (friend?.deletedAt !== null) {
       throw new NotFoundException('해당 친구 코드를 찾을 수 없습니다');
     }
     if (friend.id === ownerId) {
@@ -57,6 +72,6 @@ export class FriendshipService {
       throw error;
     }
 
-    return friend;
+    return toFriendSummary(friend);
   }
 }

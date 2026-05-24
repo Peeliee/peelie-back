@@ -26,8 +26,10 @@ import {
   type CompleteOnboardingResponse,
   type IssueSignupTokenResponse,
 } from './dto/auth.response';
+import { AppleAppLoginDto } from './dto/apple-app-login.dto';
 import { CompleteOnboardingDto } from './dto/complete-onboarding.dto';
 import { IssueSignupTokenDto } from './dto/issue-signup-token.dto';
+import { KakaoAppLoginDto } from './dto/kakao-app-login.dto';
 import { KakaoWebLoginDto } from './dto/kakao-web-login.dto';
 import { Public } from './public.decorator';
 import type { SignupContext } from './signup-context';
@@ -93,6 +95,69 @@ export class AuthController {
     @Body() dto: KakaoWebLoginDto,
   ): Promise<IssueSignupTokenResponse> {
     return this.authService.signInWithKakaoWeb(dto.code);
+  }
+
+  /**
+   * 카카오 네이티브 앱 로그인.
+   * 앱이 카카오 SDK 로 받은 access token 을 그대로 전달. 서버가 카카오 user API 호출하여 사용자 식별.
+   */
+  @Public()
+  @Post('oauth/kakao/app/login')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: '카카오 네이티브 앱 로그인 (access token 검증)',
+    description:
+      'iOS/Android 앱이 카카오 SDK 로 받은 accessToken 을 백엔드가 받아 ' +
+      'kapi.kakao.com/v2/user/me 호출하여 사용자 ID 조회. ' +
+      '기존 회원: login 응답 (access/refresh). 신규 회원: signupToken 응답 → /auth/onboarding/complete 호출.',
+  })
+  @ApiOkResponseWrappedOneOf(
+    [SignInLoginResponseDto, SignInSignupResponseDto],
+    {
+      description:
+        '기존 회원: SignInLoginResponseDto / 신규: SignInSignupResponseDto',
+    },
+  )
+  @ApiUnauthorizedResponse({
+    type: ApiErrorResponseDto,
+    description: '카카오 access token 이 유효하지 않거나 사용자 정보 조회 실패',
+  })
+  signInWithKakaoApp(
+    @Body() dto: KakaoAppLoginDto,
+  ): Promise<IssueSignupTokenResponse> {
+    return this.authService.signInWithKakaoApp(dto.accessToken);
+  }
+
+  /**
+   * Apple 네이티브 앱 로그인.
+   * iOS 앱이 Apple 로그인 후 받은 authorization code 를 전달.
+   * 서버가 .p8 으로 client_secret 서명 → Apple 토큰 엔드포인트 호출 → id_token 검증.
+   */
+  @Public()
+  @Post('oauth/apple/app/login')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Apple 네이티브 앱 로그인 (authorization code 검증)',
+    description:
+      'iOS 앱이 Apple 로그인 후 받은 authorizationCode 를 백엔드가 검증. ' +
+      '서버가 .p8 으로 client_secret JWT 서명 → Apple 토큰 엔드포인트 호출 → id_token 검증 → sub 추출. ' +
+      '기존 회원: login 응답 (access/refresh). 신규 회원: signupToken 응답 → /auth/onboarding/complete 호출.',
+  })
+  @ApiOkResponseWrappedOneOf(
+    [SignInLoginResponseDto, SignInSignupResponseDto],
+    {
+      description:
+        '기존 회원: SignInLoginResponseDto / 신규: SignInSignupResponseDto',
+    },
+  )
+  @ApiUnauthorizedResponse({
+    type: ApiErrorResponseDto,
+    description: 'Apple 인증 코드 교환 또는 id_token 검증 실패',
+  })
+  signInWithAppleApp(
+    @Body() dto: AppleAppLoginDto,
+  ): Promise<IssueSignupTokenResponse> {
+    return this.authService.signInWithAppleApp(dto.authorizationCode);
   }
 
   @Public()
