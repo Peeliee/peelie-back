@@ -89,7 +89,7 @@ export class ChatService {
         id: row.schedule.friendUser.id,
         name: row.schedule.friendUser.name,
         personality: row.schedule.friendUser.personality,
-        isDeleted: row.schedule.friendUser.deletedAt !== null,
+        isWithdrawn: row.schedule.friendUser.deletedAt !== null,
       },
       meetDate: row.schedule.meetDate,
       registeredAt: row.schedule.createdAt,
@@ -109,31 +109,39 @@ export class ChatService {
    * 마지막 메시지 미리보기 + 안 읽음 표시 포함. lastMessageAt desc 정렬.
    */
   async findChatList(userId: string): Promise<ChatListItem[]> {
-    const rows = await this.prisma.chatRoom.findMany({
-      where: { schedule: { ownerId: userId } },
-      select: {
-        id: true,
-        createdAt: true,
-        lastReadAt: true,
-        schedule: {
-          select: {
-            friendUser: {
-              select: {
-                id: true,
-                name: true,
-                personality: true,
-                deletedAt: true,
+    const [rows, friendships] = await Promise.all([
+      this.prisma.chatRoom.findMany({
+        where: { schedule: { ownerId: userId } },
+        select: {
+          id: true,
+          createdAt: true,
+          lastReadAt: true,
+          schedule: {
+            select: {
+              friendUser: {
+                select: {
+                  id: true,
+                  name: true,
+                  personality: true,
+                  deletedAt: true,
+                },
               },
             },
           },
+          messages: {
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+            select: { createdAt: true, bubbles: true },
+          },
         },
-        messages: {
-          orderBy: { createdAt: 'desc' },
-          take: 1,
-          select: { createdAt: true, bubbles: true },
-        },
-      },
-    });
+      }),
+      this.prisma.friendship.findMany({
+        where: { ownerId: userId },
+        select: { friendUserId: true },
+      }),
+    ]);
+
+    const friendIds = new Set(friendships.map((f) => f.friendUserId));
 
     const items: ChatListItem[] = rows.map((row) => {
       const lastMsg = row.messages[0];
@@ -150,7 +158,8 @@ export class ChatService {
           id: row.schedule.friendUser.id,
           name: row.schedule.friendUser.name,
           personality: row.schedule.friendUser.personality,
-          isDeleted: row.schedule.friendUser.deletedAt !== null,
+          isWithdrawn: row.schedule.friendUser.deletedAt !== null,
+          isFriend: friendIds.has(row.schedule.friendUser.id),
         },
         lastMessageAt,
         lastMessagePreview,

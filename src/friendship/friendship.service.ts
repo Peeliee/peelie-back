@@ -26,7 +26,7 @@ function toFriendSummary(row: {
     id: row.id,
     name: row.name,
     personality: row.personality,
-    isDeleted: row.deletedAt !== null,
+    isWithdrawn: row.deletedAt !== null,
   };
 }
 

@@ -63,7 +63,7 @@ export class UserController {
       '',
       '**결과**',
       '- 같은 access token 으로 재호출 시 401 (JwtAuthGuard 가 deletedAt 체크)',
-      '- 친구 입장에선 채팅방 / 약속 / 친구목록에 그대로 보이되 `friend.isDeleted: true`',
+      '- 친구 입장에선 채팅방 / 약속 / 친구목록에 그대로 보이되 `friend.isWithdrawn: true`',
       '- 새 친구 추가 / 약속 등록 / 스트림은 차단됨',
       '- 같은 카카오/Apple 계정으로 재가입 가능 (새 User 생성)',
       '',

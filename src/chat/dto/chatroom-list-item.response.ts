@@ -15,7 +15,7 @@ export class ChatRoomListFriendDto {
     description: '탈뢰한 사용자면 true.',
     example: false,
   })
-  isDeleted!: boolean;
+  isWithdrawn!: boolean;
 }
 
 export class ChatRoomListItem {
