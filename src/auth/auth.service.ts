@@ -45,6 +45,17 @@ export class AuthService {
   }
 
   /**
+   * 카카오 네이티브 앱 로그인: 앱이 SDK 로 받은 access token 을 서버가 받아
+   * kapi.kakao.com 으로 사용자 ID 조회 후 분기.
+   */
+  async signInWithKakaoApp(
+    accessToken: string,
+  ): Promise<IssueSignupTokenResponse> {
+    const kakaoUser = await this.kakaoClient.fetchUser(accessToken);
+    return this.issueByProvider(AuthProvider.KAKAO, String(kakaoUser.id));
+  }
+
+  /**
    * Apple 네이티브 앱 로그인: authorization code 를 서버에서 검증.
    * .p8 으로 client_secret 서명 → Apple 토큰 엔드포인트 호출 → id_token 검증.
    * payload.sub = Apple 안정적 user ID. 기존 계정이면 login, 신규면 signupToken.
