@@ -10,6 +10,12 @@ export class ChatRoomListFriendDto {
 
   @ApiProperty({ enum: PersonalityType })
   personality!: PersonalityType;
+
+  @ApiProperty({
+    description: '탈뢰한 사용자면 true.',
+    example: false,
+  })
+  isDeleted!: boolean;
 }
 
 export class ChatRoomListItem {

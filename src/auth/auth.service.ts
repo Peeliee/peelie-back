@@ -63,30 +63,37 @@ export class AuthService {
   async signInWithAppleApp(
     authorizationCode: string,
   ): Promise<IssueSignupTokenResponse> {
-    const { sub } =
+    const { sub, refreshToken } =
       await this.appleClient.verifyAuthorizationCode(authorizationCode);
-    return this.issueByProvider(AuthProvider.APPLE, sub);
+    return this.issueByProvider(AuthProvider.APPLE, sub, refreshToken);
   }
 
   /**
    * 소셜 provider 식별자로 기존 계정 조회.
    * 있으면 access/refresh 발급, 없으면 signupToken 발급.
+   *
+   * providerRefreshToken 은 Apple 신규 가입 시점에만 들어옴.
+   * 가입 흐름을 위해 signupToken JWT payload 에 함께 박아 onboarding 완료 시 Account 에 저장.
+   * 탈퇴(soft delete)한 사용자의 Account 는 providerUserId 에 suffix 가 붙어있어
+   * 자연스럽게 매칭 실패 → 신규 가입 흐름으로 빠짐.
    */
   async issueByProvider(
     provider: AuthProvider,
     providerUserId: string,
+    providerRefreshToken?: string,
   ): Promise<IssueSignupTokenResponse> {
     const account = await this.prisma.account.findUnique({
       where: { provider_providerUserId: { provider, providerUserId } },
+      include: { user: { select: { deletedAt: true } } },
     });
 
-    if (account) {
+    if (account && !account.user.deletedAt) {
       const tokens = await this.issueAuthTokens(account.userId);
       return { type: 'login', ...tokens };
     }
 
     const signupToken = this.jwtService.sign(
-      { type: 'signup', provider, providerUserId },
+      { type: 'signup', provider, providerUserId, providerRefreshToken },
       {
         secret: this.requireSecret('JWT_SIGNUP_SECRET'),
         expiresIn: SIGNUP_TTL,
@@ -152,6 +159,7 @@ export class AuthService {
               create: {
                 provider: ctx.provider,
                 providerUserId: ctx.providerUserId,
+                refreshToken: ctx.providerRefreshToken,
               },
             },
           },

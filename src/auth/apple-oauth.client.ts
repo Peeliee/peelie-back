@@ -8,6 +8,7 @@ import {
 } from 'jose';
 
 const APPLE_TOKEN_URL = 'https://appleid.apple.com/auth/token';
+const APPLE_REVOKE_URL = 'https://appleid.apple.com/auth/revoke';
 const APPLE_ISSUER = 'https://appleid.apple.com';
 const APPLE_JWKS_URL = new URL('https://appleid.apple.com/auth/keys');
 
@@ -27,10 +28,11 @@ export class AppleOAuthClient {
   /**
    * 네이티브 앱이 받은 authorization code 를 검증.
    * client_secret JWT 를 생성해 Apple 토큰 엔드포인트 호출 → id_token 검증 → sub 반환.
+   * refresh_token 은 신규 가입 시점에만 옴. 회원탈뢰 revoke 호출용으로 저장.
    */
   async verifyAuthorizationCode(
     code: string,
-  ): Promise<{ sub: string; email?: string }> {
+  ): Promise<{ sub: string; email?: string; refreshToken?: string }> {
     const clientSecret = await this.generateClientSecret();
     const bundleId = this.requireEnv('APPLE_BUNDLE_ID');
 
@@ -54,7 +56,34 @@ export class AppleOAuthClient {
     }
 
     const tokenRes = (await res.json()) as AppleTokenResponse;
-    return this.verifyIdToken(tokenRes.id_token, bundleId);
+    const identity = await this.verifyIdToken(tokenRes.id_token, bundleId);
+    return { ...identity, refreshToken: tokenRes.refresh_token };
+  }
+
+  /**
+   * Apple 회원탈뢰 시 호출. Apple 측 Sign-in 연결 폐기.
+   * 실패는 caller 가 무시 (DB 삭제는 진행되어야 하므로).
+   */
+  async revoke(refreshToken: string): Promise<void> {
+    const clientSecret = await this.generateClientSecret();
+    const bundleId = this.requireEnv('APPLE_BUNDLE_ID');
+
+    const body = new URLSearchParams();
+    body.set('client_id', bundleId);
+    body.set('client_secret', clientSecret);
+    body.set('token', refreshToken);
+    body.set('token_type_hint', 'refresh_token');
+
+    const res = await fetch(APPLE_REVOKE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body,
+    });
+
+    if (!res.ok) {
+      const detail = await safeReadText(res);
+      throw new Error(`Apple revoke 실패 (${res.status}): ${detail}`);
+    }
   }
 
   /**

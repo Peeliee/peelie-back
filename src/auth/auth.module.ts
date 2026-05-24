@@ -30,6 +30,6 @@ const useMockAuth = process.env.USE_MOCK_AUTH === 'true';
       useExisting: useMockAuth ? MockAuthGuard : JwtAuthGuard,
     },
   ],
-  exports: [AuthService, MockAuthGuard, JwtAuthGuard],
+  exports: [AuthService, MockAuthGuard, JwtAuthGuard, AppleOAuthClient],
 })
 export class AuthModule {}

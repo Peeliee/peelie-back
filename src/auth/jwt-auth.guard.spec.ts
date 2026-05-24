@@ -30,7 +30,7 @@ function setup(
 
   const prisma = {
     user: {
-      findUnique: jest.fn().mockResolvedValue(opts.user ?? null),
+      findFirst: jest.fn().mockResolvedValue(opts.user ?? null),
     },
   } as unknown as PrismaService;
 

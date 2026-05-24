@@ -14,6 +14,7 @@ interface SignupTokenPayload {
   type: 'signup';
   provider: AuthProvider;
   providerUserId: string;
+  providerRefreshToken?: string;
 }
 
 @Injectable()
@@ -52,6 +53,7 @@ export class SignupTokenGuard implements CanActivate {
     request.signupContext = {
       provider: payload.provider,
       providerUserId: payload.providerUserId,
+      providerRefreshToken: payload.providerRefreshToken,
     };
     return true;
   }
