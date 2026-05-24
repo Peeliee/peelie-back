@@ -2,6 +2,7 @@ import { Global, Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 
+import { AppleOAuthClient } from './apple-oauth.client';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
@@ -20,6 +21,7 @@ const useMockAuth = process.env.USE_MOCK_AUTH === 'true';
   providers: [
     AuthService,
     KakaoOAuthClient,
+    AppleOAuthClient,
     MockAuthGuard,
     JwtAuthGuard,
     SignupTokenGuard,
