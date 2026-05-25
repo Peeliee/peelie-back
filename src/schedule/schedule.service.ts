@@ -51,7 +51,7 @@ function toScheduleResponse(row: ScheduleRow): ScheduleResponse {
       id: row.friendUser.id,
       name: row.friendUser.name,
       personality: row.friendUser.personality,
-      isDeleted: row.friendUser.deletedAt !== null,
+      isWithdrawn: row.friendUser.deletedAt !== null,
     },
   };
 }

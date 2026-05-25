@@ -14,11 +14,16 @@ function createService() {
       findMany: jest.fn(),
       create: jest.fn(),
     },
+    friendship: {
+      findUnique: jest.fn().mockResolvedValue({ id: 'fs-1' }),
+      findMany: jest.fn().mockResolvedValue([]),
+    },
     $transaction: jest.fn(),
   };
   const llmService = {
     generateChatTurn: jest.fn(),
     generateGreeting: jest.fn(),
+    summarizeConversation: jest.fn(),
   };
 
   const service = new ChatService(

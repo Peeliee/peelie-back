@@ -15,7 +15,14 @@ export class ChatListFriendDto {
     description: '탈뢰한 사용자면 true.',
     example: false,
   })
-  isDeleted!: boolean;
+  isWithdrawn!: boolean;
+
+  @ApiProperty({
+    description:
+      '현재 내 친구 목록에 있으면 true. 친구 삭제하면 false (채팅방은 그대로 보이되 새 대화 불가).',
+    example: true,
+  })
+  isFriend!: boolean;
 }
 
 export class ChatListItem {

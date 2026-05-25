@@ -89,7 +89,7 @@ export class ChatService {
         id: row.schedule.friendUser.id,
         name: row.schedule.friendUser.name,
         personality: row.schedule.friendUser.personality,
-        isDeleted: row.schedule.friendUser.deletedAt !== null,
+        isWithdrawn: row.schedule.friendUser.deletedAt !== null,
       },
       meetDate: row.schedule.meetDate,
       registeredAt: row.schedule.createdAt,
@@ -109,31 +109,39 @@ export class ChatService {
    * 마지막 메시지 미리보기 + 안 읽음 표시 포함. lastMessageAt desc 정렬.
    */
   async findChatList(userId: string): Promise<ChatListItem[]> {
-    const rows = await this.prisma.chatRoom.findMany({
-      where: { schedule: { ownerId: userId } },
-      select: {
-        id: true,
-        createdAt: true,
-        lastReadAt: true,
-        schedule: {
-          select: {
-            friendUser: {
-              select: {
-                id: true,
-                name: true,
-                personality: true,
-                deletedAt: true,
+    const [rows, friendships] = await Promise.all([
+      this.prisma.chatRoom.findMany({
+        where: { schedule: { ownerId: userId } },
+        select: {
+          id: true,
+          createdAt: true,
+          lastReadAt: true,
+          schedule: {
+            select: {
+              friendUser: {
+                select: {
+                  id: true,
+                  name: true,
+                  personality: true,
+                  deletedAt: true,
+                },
               },
             },
           },
+          messages: {
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+            select: { createdAt: true, bubbles: true },
+          },
         },
-        messages: {
-          orderBy: { createdAt: 'desc' },
-          take: 1,
-          select: { createdAt: true, bubbles: true },
-        },
-      },
-    });
+      }),
+      this.prisma.friendship.findMany({
+        where: { ownerId: userId },
+        select: { friendUserId: true },
+      }),
+    ]);
+
+    const friendIds = new Set(friendships.map((f) => f.friendUserId));
 
     const items: ChatListItem[] = rows.map((row) => {
       const lastMsg = row.messages[0];
@@ -150,7 +158,8 @@ export class ChatService {
           id: row.schedule.friendUser.id,
           name: row.schedule.friendUser.name,
           personality: row.schedule.friendUser.personality,
-          isDeleted: row.schedule.friendUser.deletedAt !== null,
+          isWithdrawn: row.schedule.friendUser.deletedAt !== null,
+          isFriend: friendIds.has(row.schedule.friendUser.id),
         },
         lastMessageAt,
         lastMessagePreview,
@@ -214,6 +223,8 @@ export class ChatService {
       );
     }
 
+    await this.assertActiveFriendship(userId, ctx.friendUser.id);
+
     yield {
       event: 'meta',
       data: {
@@ -263,6 +274,8 @@ export class ChatService {
         '탈뢰한 사용자와는 새 대화를 할 수 없습니다',
       );
     }
+
+    await this.assertActiveFriendship(userId, ctx.friendUser.id);
 
     yield {
       event: 'meta',
@@ -360,6 +373,25 @@ export class ChatService {
       meetDate: chatRoom.schedule.meetDate,
       lastEnteredAt: chatRoom.lastEnteredAt,
     };
+  }
+
+  /**
+   * 현재도 친구 관계가 유효한지 검사. 친구 삭제 후에는 새 stream 차단.
+   * (옛 메시지 조회는 GET /messages 로 계속 가능)
+   */
+  private async assertActiveFriendship(
+    ownerId: string,
+    friendUserId: string,
+  ): Promise<void> {
+    const friendship = await this.prisma.friendship.findUnique({
+      where: { ownerId_friendUserId: { ownerId, friendUserId } },
+      select: { id: true },
+    });
+    if (!friendship) {
+      throw new BadRequestException(
+        '친구 관계가 없어 새 대화를 시작할 수 없습니다',
+      );
+    }
   }
 
   private async assertOwned(userId: string, chatRoomId: string): Promise<void> {

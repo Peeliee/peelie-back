@@ -26,7 +26,7 @@ function toFriendSummary(row: {
     id: row.id,
     name: row.name,
     personality: row.personality,
-    isDeleted: row.deletedAt !== null,
+    isWithdrawn: row.deletedAt !== null,
   };
 }
 
@@ -41,6 +41,15 @@ export class FriendshipService {
       include: { friendUser: { select: FRIEND_SELECT } },
     });
     return rows.map((row) => toFriendSummary(row.friendUser));
+  }
+
+  async remove(ownerId: string, friendUserId: string): Promise<void> {
+    const result = await this.prisma.friendship.deleteMany({
+      where: { ownerId, friendUserId },
+    });
+    if (result.count === 0) {
+      throw new NotFoundException('친구 관계를 찾을 수 없습니다');
+    }
   }
 
   async addByFriendCode(
