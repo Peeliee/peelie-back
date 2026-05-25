@@ -23,6 +23,7 @@ function createService() {
   const llmService = {
     generateChatTurn: jest.fn(),
     generateGreeting: jest.fn(),
+    summarizeConversation: jest.fn(),
   };
 
   const service = new ChatService(

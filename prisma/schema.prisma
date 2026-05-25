@@ -166,6 +166,10 @@ model ChatRoom {
   // 채팅방 진입 부수효과 또는 명시적 /read 호출로 갱신.
   // isUnread = (lastMessageAt > lastReadAt) 판단용.
   lastReadAt    DateTime?
+  // D-day 모달용 대화 요약. 06:00 KST 스케줄러로 1회 생성. 60자 ±10.
+  summary             String?
+  // 요약 시도 시각 (성공/실패 무관). null 이면 미시도, 있고 summary null 이면 실패.
+  summaryGeneratedAt  DateTime?
 
   createdAt DateTime @default(now())
 
